@@ -1,6 +1,7 @@
 use crate::error::{ReaderError, WriterError};
+use crate::formats::Csv;
 use crate::transaction::{Transaction, TransactionDecoder, TransactionEncoder};
-use std::io::Read;
+use std::io::{Read, Write};
 
 pub struct Bin;
 
@@ -11,7 +12,7 @@ impl TransactionDecoder for Bin {
 }
 
 impl TransactionEncoder for Bin {
-    fn encode_all<W: std::io::Write>(&self, w: &mut W) -> Result<(), WriterError> {
+    fn encode_all<W: Write>(&self, txs: &Vec<Transaction>, w: &mut W) -> Result<(), WriterError> {
         todo!()
     }
 }
