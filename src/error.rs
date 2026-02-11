@@ -1,12 +1,20 @@
 use std::fmt;
-use std::fmt::{write, Formatter};
-
 
 #[derive(Debug)]
 pub enum ReaderError {
-    InvalidFormat,
-    InvalidDataFormat{ field_name: String, line: usize},
     Io(std::io::Error),
+    InvalidCsvHeader {
+        header: String,
+    },
+    InvalidRow {
+        line_no: usize,
+        reason: String,
+    },
+    InvalidFieldValue {
+        line_no: usize,
+        field: String,
+        value: String,
+    },
 }
 
 #[derive(Debug)]
@@ -14,24 +22,27 @@ pub enum WriterError {
     Io(std::io::Error),
 }
 
-
 impl fmt::Display for ReaderError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ReaderError::InvalidFormat => {
-                write!(f, "Некорректный формат CSV (заголовок)")
+            Self::Io(e) => write!(f, "{}", e),
+
+            Self::InvalidCsvHeader { header } => {
+                write!(f, "Invalid CSV header: '{header}'")
+            }
+            Self::InvalidRow { line_no, reason } => {
+                write!(f, "Line {line_no} - invalid row: {reason}")
             }
 
-            ReaderError::InvalidDataFormat { field_name, line } => {
+            Self::InvalidFieldValue {
+                line_no,
+                field,
+                value,
+            } => {
                 write!(
                     f,
-                    "Некорректные данные в поле '{}', строке {}",
-                    field_name, line
+                    "Line {line_no} - invalid field value: {field}, value: {value}"
                 )
-            }
-
-            ReaderError::Io(err) => {
-                write!(f, "Ошибка ввода-вывода: {}", err)
             }
         }
     }

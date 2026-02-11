@@ -13,11 +13,22 @@ pub struct Transaction {
     pub description: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TxType {
     Deposit,
     Transfer,
     Withdrawal,
+}
+
+impl TxType {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "DEPOSIT" => Option::from(TxType::Deposit),
+            "TRANSFER" => Option::from(TxType::Transfer),
+            "WITHDRAWAL" => Option::from(TxType::Withdrawal),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -25,6 +36,17 @@ pub enum TxStatus {
     Success,
     Failure,
     Pending,
+}
+
+impl TxStatus {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "SUCCESS" => Option::from(TxStatus::Success),
+            "FAILURE" => Option::from(TxStatus::Failure),
+            "PENDING" => Option::from(TxStatus::Pending),
+            _ => None,
+        }
+    }
 }
 
 pub trait TransactionDecoder {
