@@ -1,7 +1,7 @@
 use crate::error::{ReaderError, WriterError};
 use std::io::{Cursor, Read, Write};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transaction {
     pub tx_id: u64,
     pub tx_type: TxType,
@@ -22,16 +22,30 @@ pub enum TxType {
 
 impl TxType {
     pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "DEPOSIT" => Option::from(TxType::Deposit),
-            "TRANSFER" => Option::from(TxType::Transfer),
-            "WITHDRAWAL" => Option::from(TxType::Withdrawal),
+        match s.trim() {
+            "DEPOSIT" => Some(TxType::Deposit),
+            "TRANSFER" => Some(TxType::Transfer),
+            "WITHDRAWAL" => Some(TxType::Withdrawal),
             _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TxType::Deposit => "DEPOSIT",
+            TxType::Transfer => "TRANSFER",
+            TxType::Withdrawal => "WITHDRAWAL",
         }
     }
 }
 
-#[derive(Debug, Clone)]
+impl std::fmt::Display for TxType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TxStatus {
     Success,
     Failure,
@@ -40,12 +54,26 @@ pub enum TxStatus {
 
 impl TxStatus {
     pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "SUCCESS" => Option::from(TxStatus::Success),
-            "FAILURE" => Option::from(TxStatus::Failure),
-            "PENDING" => Option::from(TxStatus::Pending),
+        match s.trim() {
+            "SUCCESS" => Some(TxStatus::Success),
+            "FAILURE" => Some(TxStatus::Failure),
+            "PENDING" => Some(TxStatus::Pending),
             _ => None,
         }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TxStatus::Success => "SUCCESS",
+            TxStatus::Failure => "FAILURE",
+            TxStatus::Pending => "PENDING",
+        }
+    }
+}
+
+impl std::fmt::Display for TxStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -70,4 +98,40 @@ pub fn write_transactions<W: Write>(
     w: &mut W,
 ) -> Result<(), WriterError> {
     encoder.encode_all(txs, w)
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Tests
+// ─────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_tx_type_ok() {
+        assert_eq!(TxType::parse("DEPOSIT").unwrap(), TxType::Deposit);
+        assert_eq!(TxType::parse("TRANSFER").unwrap(), TxType::Transfer);
+        assert_eq!(TxType::parse("WITHDRAWAL").unwrap(), TxType::Withdrawal);
+    }
+
+    #[test]
+    fn test_parse_tx_type_err() {
+        assert_eq!(TxType::parse("Deposit"), None);
+        assert_eq!(TxType::parse(""), None);
+        assert_eq!(TxType::parse("ABC"), None);
+    }
+
+    #[test]
+    fn test_parse_tx_status_ok() {
+        assert_eq!(TxStatus::parse("SUCCESS").unwrap(), TxStatus::Success);
+        assert_eq!(TxStatus::parse("FAILURE").unwrap(), TxStatus::Failure);
+        assert_eq!(TxStatus::parse("PENDING").unwrap(), TxStatus::Pending);
+    }
+
+    #[test]
+    fn test_parse_tx_status_err() {
+        assert_eq!(TxStatus::parse("Success"), None);
+        assert_eq!(TxStatus::parse(""), None);
+        assert_eq!(TxStatus::parse("ABC"), None);
+    }
 }
