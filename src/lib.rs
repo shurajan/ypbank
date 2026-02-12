@@ -3,6 +3,7 @@ pub mod transaction;
 
 pub mod bin;
 pub mod csv;
+mod schema;
 pub mod txt;
 
 pub use error::{ReaderError, WriterError};

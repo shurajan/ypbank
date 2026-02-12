@@ -1,4 +1,5 @@
 use crate::error::{ReaderError, WriterError};
+use crate::schema;
 use crate::transaction::{Transaction, TransactionDecoder, TransactionEncoder, TxStatus, TxType};
 use std::io::{BufRead, BufReader, Read, Write};
 
@@ -37,23 +38,23 @@ impl TransactionDecoder for Csv {
                 status_str,
             ] = data;
 
-            let tx_id = parse::parse_u64_field(tx_id_str, field::TX_ID, line_no)?;
-            let from_user_id = parse::parse_u64_field(from_str, field::FROM_USER_ID, line_no)?;
-            let to_user_id = parse::parse_u64_field(to_str, field::TO_USER_ID, line_no)?;
-            let amount = parse::parse_u64_field(amount_str, field::AMOUNT, line_no)?;
-            let timestamp = parse::parse_u64_field(ts_str, field::TIMESTAMP, line_no)?;
+            let tx_id = parse::parse_u64_field(tx_id_str, schema::TX_ID, line_no)?;
+            let from_user_id = parse::parse_u64_field(from_str, schema::FROM_USER_ID, line_no)?;
+            let to_user_id = parse::parse_u64_field(to_str, schema::TO_USER_ID, line_no)?;
+            let amount = parse::parse_u64_field(amount_str, schema::AMOUNT, line_no)?;
+            let timestamp = parse::parse_u64_field(ts_str, schema::TIMESTAMP, line_no)?;
 
             let tx_type =
                 TxType::parse(tx_type_str).ok_or_else(|| ReaderError::InvalidFieldValue {
                     line_no,
-                    field: field::TX_TYPE.to_string(),
+                    field: schema::TX_TYPE.to_string(),
                     value: tx_type_str.to_string(),
                 })?;
 
             let status =
                 TxStatus::parse(status_str).ok_or_else(|| ReaderError::InvalidFieldValue {
                     line_no,
-                    field: field::STATUS.to_string(),
+                    field: schema::STATUS.to_string(),
                     value: status_str.to_string(),
                 })?;
 
@@ -75,7 +76,7 @@ impl TransactionDecoder for Csv {
 
 impl TransactionEncoder for Csv {
     fn encode_all<W: Write>(&self, txs: &Vec<Transaction>, w: &mut W) -> Result<(), WriterError> {
-        writeln!(w, "{}", field::EXPECTED_HEADER.join(",")).map_err(WriterError::Io)?;
+        writeln!(w, "{}", schema::FIELDS_NAMES.join(",")).map_err(WriterError::Io)?;
         for tx in txs {
             writeln!(
                 w,
@@ -96,38 +97,12 @@ impl TransactionEncoder for Csv {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Private constants
-// ─────────────────────────────────────────────────────────────────────────────
-mod field {
-    use crate::csv::field;
-
-    pub const TX_ID: &str = "TX_ID";
-    pub const TX_TYPE: &str = "TX_TYPE";
-    pub const FROM_USER_ID: &str = "FROM_USER_ID";
-    pub const TO_USER_ID: &str = "TO_USER_ID";
-    pub const AMOUNT: &str = "AMOUNT";
-    pub const TIMESTAMP: &str = "TIMESTAMP";
-    pub const STATUS: &str = "STATUS";
-    pub const DESCRIPTION: &str = "DESCRIPTION";
-
-    pub const EXPECTED_HEADER: [&str; 8] = [
-        TX_ID,
-        TX_TYPE,
-        FROM_USER_ID,
-        TO_USER_ID,
-        AMOUNT,
-        TIMESTAMP,
-        STATUS,
-        DESCRIPTION,
-    ];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Private helpers
 // ─────────────────────────────────────────────────────────────────────────────
 mod parse {
-    use super::field;
+
     use crate::error::ReaderError;
+    use crate::schema;
 
     pub(super) fn is_blank(s: &str) -> bool {
         s.trim().is_empty()
@@ -135,7 +110,7 @@ mod parse {
 
     pub(super) fn validate_header(line: &str) -> Result<(), ReaderError> {
         let cols: Vec<&str> = line.trim().split(',').collect();
-        if cols == field::EXPECTED_HEADER {
+        if cols == schema::FIELDS_NAMES {
             Ok(())
         } else {
             Err(ReaderError::InvalidCsvHeader {
@@ -474,6 +449,6 @@ mod tests {
         let output = String::from_utf8(buffer.into_inner()).unwrap();
         let first_line = output.lines().next().unwrap();
 
-        assert_eq!(first_line, field::EXPECTED_HEADER.join(","));
+        assert_eq!(first_line, schema::FIELDS_NAMES.join(","));
     }
 }
