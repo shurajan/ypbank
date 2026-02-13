@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use crate::error::{ReaderError, WriterError};
-use crate::transaction::{Transaction, TransactionDecoder, TransactionEncoder};
-use std::io::{Read, Write};
+use crate::transaction::{Transaction, TransactionDecoder, TransactionEncoder, TxStatus, TxType};
+use std::io::{BufRead, BufReader, Read, Write};
+use crate::schema;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -12,9 +14,24 @@ pub struct Txt;
 // ─────────────────────────────────────────────────────────────────────────────
 impl TransactionDecoder for Txt {
     fn decode_all<R: Read>(&self, r: &mut R) -> Result<Vec<Transaction>, ReaderError> {
-        todo!()
+        let mut txs = Vec::new();
+        let mut reader = BufReader::new(r);
+
+        for (line_no, line) in reader.lines().enumerate() {
+            let fields:HashMap<String, String> = HashMap::new();
+
+            if line.unwrap().trim().is_empty() && !fields.is_empty() {
+               todo!()
+            } else { continue; }
+
+            let line = line.map_err(ReaderError::Io)?;
+            println!("{}", line);
+        }
+
+        Ok(txs)
     }
 }
+
 
 impl TransactionEncoder for Txt {
     fn encode_all<W: Write>(&self, txs: &Vec<Transaction>, w: &mut W) -> Result<(), WriterError> {
@@ -58,6 +75,10 @@ mod parse {
             let line = "DESCRIPTION: \"ABC: CDE\"";
             let kv = parse_kv(line).unwrap();
             assert_eq!(kv, ("DESCRIPTION".to_string(), "\"ABC: CDE\"".to_string()));
+
+            let line = "DESCRIPTION: \"\"";
+            let kv = parse_kv(line).unwrap();
+            assert_eq!(kv, ("DESCRIPTION".to_string(), "\"\"".to_string()));
         }
 
         #[test]
