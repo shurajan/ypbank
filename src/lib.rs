@@ -1,12 +1,10 @@
+pub mod codec;
 pub mod error;
+pub mod schema;
 pub mod transaction;
 
-pub mod bin;
-pub mod csv;
-mod schema;
-pub mod txt;
-
+// Удобный реэкспорт
+pub use codec::{Bin, Csv, Txt};
+pub use codec::{Decoder, Encoder};
 pub use error::{ReaderError, WriterError};
-pub use transaction::{
-    Transaction, TransactionDecoder, TransactionEncoder, read_transactions, write_transactions,
-};
+pub use transaction::Transaction;

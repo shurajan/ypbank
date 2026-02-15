@@ -15,6 +15,21 @@ pub enum ReaderError {
         field: String,
         value: String,
     },
+
+    MissingFields {
+        line_no: usize,
+        fields: Vec<String>,
+    },
+
+    UnknownField {
+        line_no: usize,
+        field: String,
+    },
+
+    DuplicateField {
+        line_no: usize,
+        field: String,
+    },
 }
 
 #[derive(Debug)]
@@ -43,6 +58,16 @@ impl fmt::Display for ReaderError {
                     f,
                     "Line {line_no} - invalid field value: {field}, value: {value}"
                 )
+            }
+            Self::MissingFields { line_no, fields } => {
+                write!(f, "line {}: missing fields: {}", line_no, fields.join(", "))
+            }
+            Self::UnknownField { line_no, field } => {
+                write!(f, "line {}: unknown field: {}", line_no, field)
+            }
+
+            Self::DuplicateField { line_no, field } => {
+                write!(f, "line {}: duplicate field: {}", line_no, field)
             }
         }
     }

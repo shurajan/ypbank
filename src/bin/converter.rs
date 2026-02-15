@@ -1,9 +1,7 @@
 use std::io::Cursor;
-use ypbank::read_transactions;
-use ypbank::txt::Txt;
+use ypbank::{Decoder, Txt};
 
 fn main() {
-    let decoder = Txt;
     let data = br#"# Record 1 (Deposit)
 TX_ID: 1234567890123456
 TX_TYPE: DEPOSIT
@@ -37,6 +35,15 @@ DESCRIPTION: "User withdrawal"
 
     let mut cursor = Cursor::new(data);
 
-    let txs = read_transactions(&decoder, &mut cursor).unwrap();
-    println!("{:?}", txs);
+    match Txt.decode(&mut cursor) {
+        Ok(txs) => {
+            println!("Parsed {} transactions:", txs.len());
+            for tx in &txs {
+                println!("  {:?}", tx);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error: {}", e);
+        }
+    }
 }
