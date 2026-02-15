@@ -153,13 +153,15 @@ mod parse {
 
         #[test]
         fn test_validate_header_ok() {
-            let header = "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
+            let header =
+                "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
             assert!(validate_header(header).is_ok());
         }
 
         #[test]
         fn test_validate_header_ok_no_newline() {
-            let header = "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION";
+            let header =
+                "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION";
             assert!(validate_header(header).is_ok());
         }
 
@@ -167,23 +169,25 @@ mod parse {
         fn test_validate_header_wrong() {
             let header = "WRONG,HEADER\n";
             assert!(matches!(
-            validate_header(header),
-            Err(ReaderError::InvalidCsvHeader { .. })
-        ));
+                validate_header(header),
+                Err(ReaderError::InvalidCsvHeader { .. })
+            ));
         }
 
         #[test]
         fn test_validate_header_wrong_order() {
-            let header = "TX_TYPE,TX_ID,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
+            let header =
+                "TX_TYPE,TX_ID,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
             assert!(matches!(
-            validate_header(header),
-            Err(ReaderError::InvalidCsvHeader { .. })
-        ));
+                validate_header(header),
+                Err(ReaderError::InvalidCsvHeader { .. })
+            ));
         }
 
         #[test]
         fn test_split_fields_ok() {
-            let line = r#"1002,TRANSFER,501,502,15000,1672534800000,FAILURE,"Payment, invoice #123""#;
+            let line =
+                r#"1002,TRANSFER,501,502,15000,1672534800000,FAILURE,"Payment, invoice #123""#;
             let result = split_fields(line, 0);
             assert!(result.is_ok());
 
@@ -199,9 +203,9 @@ mod parse {
         fn test_split_fields_no_quotes() {
             let line = "1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,No quotes";
             assert!(matches!(
-            split_fields(line, 0),
-            Err(ReaderError::InvalidRow { .. })
-        ));
+                split_fields(line, 0),
+                Err(ReaderError::InvalidRow { .. })
+            ));
         }
 
         #[test]
@@ -209,9 +213,9 @@ mod parse {
             let line = r#"1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"No closing"#;
 
             assert!(matches!(
-            split_fields(line, 0),
-            Err(ReaderError::InvalidRow { .. })
-        ));
+                split_fields(line, 0),
+                Err(ReaderError::InvalidRow { .. })
+            ));
         }
 
         #[test]
