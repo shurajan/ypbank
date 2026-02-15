@@ -3,6 +3,7 @@ use crate::codec::{Decoder, Encoder};
 use crate::error::{ReaderError, WriterError};
 use crate::transaction::{Transaction, TransactionBuilder};
 use std::io::{BufRead, BufReader, Read, Write};
+use crate::schema;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -60,7 +61,23 @@ impl Decoder for Txt {
 
 impl Encoder for Txt {
     fn encode<W: Write>(&self, txs: &[Transaction], w: &mut W) -> Result<(), WriterError> {
-        todo!()
+
+        for tx in txs {
+            writeln!(
+                w,
+                "{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n\n",
+                schema::TX_ID, tx.tx_id,
+                schema::TX_TYPE,tx.tx_type,
+                schema::FROM_USER_ID,tx.from_user_id,
+                schema::TO_USER_ID,tx.to_user_id,
+                schema::AMOUNT,tx.amount,
+                schema::TIMESTAMP,tx.timestamp,
+                schema::STATUS,tx.status,
+                schema::DESCRIPTION,tx.description
+            )
+                .map_err(WriterError::Io)?;
+        }
+        Ok(())
     }
 }
 
@@ -107,5 +124,32 @@ mod parse {
             assert_eq!(parse_kv(":"), None);
             assert_eq!(parse_kv(""), None);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transaction::{TxStatus, TxType};
+    use std::io::Cursor;
+    #[test]
+    fn encode_decode_roundtrip() {
+        let original = vec![Transaction {
+            tx_id: 1001,
+            tx_type:TxType::Deposit,
+            from_user_id: 0,
+            to_user_id: 501,
+            amount: 50000,
+            timestamp: 1672531200000,
+            status: TxStatus::Success,
+            description: "\"Initial funding\"".to_string(),
+        }];
+
+        let mut buffer = Cursor::new(Vec::new());
+        Txt.encode(&original, &mut buffer).unwrap();
+        buffer.set_position(0);
+        let decoded = Txt.decode(&mut buffer).unwrap();
+
+        assert_eq!(original, decoded);
     }
 }
