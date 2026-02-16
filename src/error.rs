@@ -30,6 +30,12 @@ pub enum ReaderError {
         line_no: usize,
         field: String,
     },
+
+    InvalidMagic,
+
+    InvalidBinaryFormat {
+        reason: String,
+    },
 }
 
 #[derive(Debug)]
@@ -68,6 +74,12 @@ impl fmt::Display for ReaderError {
 
             Self::DuplicateField { line_no, field } => {
                 write!(f, "line {}: duplicate field: {}", line_no, field)
+            }
+            Self::InvalidMagic => {
+                write!(f, "Invalid Magic")
+            }
+            Self::InvalidBinaryFormat { reason } => {
+                write!(f, "Invalid binary format: {reason}")
             }
         }
     }

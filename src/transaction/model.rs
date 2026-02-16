@@ -29,6 +29,15 @@ impl TxType {
         }
     }
 
+    pub fn from(val: u8) -> Option<Self> {
+        match val {
+            0 => Some(TxType::Deposit),
+            1 => Some(TxType::Transfer),
+            2 => Some(TxType::Withdrawal),
+            _ => None,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             TxType::Deposit => "DEPOSIT",
@@ -66,6 +75,15 @@ impl TxStatus {
             TxStatus::Success => "SUCCESS",
             TxStatus::Failure => "FAILURE",
             TxStatus::Pending => "PENDING",
+        }
+    }
+
+    pub fn from(val: u8) -> Option<Self> {
+        match val {
+            0 => Some(TxStatus::Success),
+            1 => Some(TxStatus::Failure),
+            2 => Some(TxStatus::Pending),
+            _ => None,
         }
     }
 }
