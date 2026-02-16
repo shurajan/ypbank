@@ -45,6 +45,14 @@ impl TxType {
             TxType::Withdrawal => "WITHDRAWAL",
         }
     }
+
+    pub(crate) fn to_byte(&self) -> u8 {
+        match self {
+            TxType::Deposit => 0u8,
+            TxType::Transfer => 1u8,
+            TxType::Withdrawal => 2u8,
+        }
+    }
 }
 
 impl std::fmt::Display for TxType {
@@ -84,6 +92,14 @@ impl TxStatus {
             1 => Some(TxStatus::Failure),
             2 => Some(TxStatus::Pending),
             _ => None,
+        }
+    }
+
+    pub(crate) fn to_byte(&self) -> u8 {
+        match self {
+            TxStatus::Success => 0u8,
+            TxStatus::Failure => 1u8,
+            TxStatus::Pending => 2u8,
         }
     }
 }

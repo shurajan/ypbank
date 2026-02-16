@@ -41,6 +41,9 @@ pub enum ReaderError {
 #[derive(Debug)]
 pub enum WriterError {
     Io(std::io::Error),
+    InvalidData {
+        reason: String,
+    },
 }
 
 impl fmt::Display for ReaderError {
@@ -80,6 +83,17 @@ impl fmt::Display for ReaderError {
             }
             Self::InvalidBinaryFormat { reason } => {
                 write!(f, "Invalid binary format: {reason}")
+            }
+        }
+    }
+}
+
+impl fmt::Display for WriterError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WriterError::Io(e) => write!(f, "{}", e),
+            WriterError::InvalidData { reason } => {
+                write!(f, "Invalid data: {reason}")
             }
         }
     }
