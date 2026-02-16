@@ -1,9 +1,9 @@
 use super::{Decoder, Encoder};
-use crate::codec::bin::parse::{read_record};
+use crate::codec::bin::parse::read_record;
+use crate::codec::bin::write::write_record;
 use crate::error::{ReaderError, WriterError};
 use crate::transaction::Transaction;
 use std::io::{BufReader, Cursor, Read, Write};
-use crate::codec::bin::write::write_record;
 
 pub struct Bin;
 
@@ -33,10 +33,10 @@ impl Encoder for Bin {
 // Private helpers
 // ─────────────────────────────────────────────────────────────────────────────
 mod parse {
+    use crate::codec::bin::{MAGIC, MIN_RECORD_SIZE};
     use crate::transaction::{TxStatus, TxType};
     use crate::{ReaderError, Transaction};
     use std::io::{ErrorKind, Read};
-    use crate::codec::bin::{MAGIC, MIN_RECORD_SIZE};
 
     macro_rules! read_be {
         ($r:expr, $ty:ty) => {{
@@ -194,37 +194,48 @@ mod parse {
 }
 
 mod write {
-    use std::io::Write;
-    use crate::WriterError;
     use super::*;
+    use crate::WriterError;
+    use std::io::Write;
 
     macro_rules! write_all {
         ($w:expr, $bytes:expr) => {
             $w.write_all($bytes).map_err(WriterError::Io)
         };
+    }
 
-        }
+    macro_rules! write_be {
+        ($w:expr, $val:expr) => {
+            $w.write_all(&$val.to_be_bytes()).map_err(WriterError::Io)
+        };
+    }
+
+    macro_rules! write_byte {
+        ($w:expr, $val:expr) => {
+            $w.write_all(&[$val.to_byte()]).map_err(WriterError::Io)
+        };
+    }
 
     pub(super) fn write_record<W: Write>(w: &mut W, tx: &Transaction) -> Result<(), WriterError> {
         let desc = tx.description.as_bytes();
-        let size = MIN_RECORD_SIZE + desc.len() as u32;
+        let desc_len = desc.len() as u32;
+        let size = MIN_RECORD_SIZE + desc_len;
 
         write_all!(w, &MAGIC)?;
-        write_all!(w, &size.to_be_bytes())?;
-        write_all!(w, &tx.tx_id.to_be_bytes())?;
-        write_all!(w, &tx.tx_type.to_byte().to_be_bytes())?;
-        write_all!(w, &tx.from_user_id.to_be_bytes())?;
-        write_all!(w, &tx.to_user_id.to_be_bytes())?;
-        write_all!(w, &tx.amount.to_be_bytes())?;
-        write_all!(w, &tx.timestamp.to_be_bytes())?;
-        write_all!(w, &tx.status.to_byte().to_be_bytes())?;
-        write_all!(w, &(desc.len() as u32).to_be_bytes())?;
+        write_be!(w, size)?;
+        write_be!(w, tx.tx_id)?;
+        write_byte!(w, tx.tx_type)?;
+        write_be!(w, tx.from_user_id)?;
+        write_be!(w, tx.to_user_id)?;
+        write_be!(w, tx.amount)?;
+        write_be!(w, tx.timestamp)?;
+        write_byte!(w, tx.status)?;
+        write_be!(w, desc_len)?;
         write_all!(w, desc)?;
 
         Ok(())
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -281,8 +292,14 @@ mod tests {
     fn roundtrip_multiple() {
         let txs = vec![
             sample_tx(),
-            Transaction { tx_id: 999, ..sample_tx() },
-            Transaction { description: "Another one".into(), ..sample_tx() },
+            Transaction {
+                tx_id: 999,
+                ..sample_tx()
+            },
+            Transaction {
+                description: "Another one".into(),
+                ..sample_tx()
+            },
         ];
 
         let mut buf = Vec::new();
@@ -319,7 +336,10 @@ mod tests {
     #[test]
     fn roundtrip_all_tx_types() {
         for tx_type in [TxType::Deposit, TxType::Transfer, TxType::Withdrawal] {
-            let tx = Transaction { tx_type, ..sample_tx() };
+            let tx = Transaction {
+                tx_type,
+                ..sample_tx()
+            };
             let bytes = make_record(&tx);
 
             let mut cursor = Cursor::new(bytes);
@@ -332,7 +352,10 @@ mod tests {
     #[test]
     fn roundtrip_all_statuses() {
         for status in [TxStatus::Success, TxStatus::Failure, TxStatus::Pending] {
-            let tx = Transaction { status, ..sample_tx() };
+            let tx = Transaction {
+                status,
+                ..sample_tx()
+            };
             let bytes = make_record(&tx);
 
             let mut cursor = Cursor::new(bytes);
@@ -365,7 +388,6 @@ mod tests {
 
     #[test]
     fn parse_truncated_header() {
-
         let data = MAGIC;
         let mut cursor = Cursor::new(data);
 
@@ -384,10 +406,7 @@ mod tests {
 
         let mut cursor = Cursor::new(data);
 
-        assert!(matches!(
-            read_record(&mut cursor),
-            Err(ReaderError::Io(_))
-        ));
+        assert!(matches!(read_record(&mut cursor), Err(ReaderError::Io(_))));
     }
 
     #[test]
@@ -491,7 +510,13 @@ mod tests {
     #[test]
     fn encoder_decoder_roundtrip() {
         let bin = Bin;
-        let txs = vec![sample_tx(), Transaction { tx_id: 777, ..sample_tx() }];
+        let txs = vec![
+            sample_tx(),
+            Transaction {
+                tx_id: 777,
+                ..sample_tx()
+            },
+        ];
 
         let mut buf = Vec::new();
         bin.encode(&txs, &mut buf).unwrap();

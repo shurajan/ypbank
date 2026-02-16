@@ -41,9 +41,7 @@ pub enum ReaderError {
 #[derive(Debug)]
 pub enum WriterError {
     Io(std::io::Error),
-    InvalidData {
-        reason: String,
-    },
+    InvalidData { reason: String },
 }
 
 impl fmt::Display for ReaderError {
