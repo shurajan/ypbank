@@ -9,6 +9,7 @@ pub struct Bin;
 
 const MAGIC: [u8; 4] = [0x59, 0x50, 0x42, 0x4E];
 const MIN_RECORD_SIZE: u32 = 8 + 1 + 8 + 8 + 8 + 8 + 1 + 4;
+const HEADER_SIZE: usize = 8;
 
 impl Decoder for Bin {
     fn decode<R: Read>(&self, r: &mut R) -> Result<Vec<Transaction>, ReaderError> {
@@ -172,7 +173,7 @@ mod parse {
             assert_eq!(result.from_user_id, 0);
             assert_eq!(result.to_user_id, 36028797018963967);
             assert_eq!(result.amount, 100);
-            assert!(result.status == TxStatus::Failure);
+            assert_eq!(result.status, TxStatus::Failure);
             assert_eq!(result.description, "\"Record number 1\"");
         }
 
@@ -198,42 +199,31 @@ mod write {
     use crate::WriterError;
     use std::io::Write;
 
-    macro_rules! write_all {
-        ($w:expr, $bytes:expr) => {
-            $w.write_all($bytes).map_err(WriterError::Io)
-        };
-    }
-
-    macro_rules! write_be {
-        ($w:expr, $val:expr) => {
-            $w.write_all(&$val.to_be_bytes()).map_err(WriterError::Io)
-        };
-    }
-
-    macro_rules! write_byte {
-        ($w:expr, $val:expr) => {
-            $w.write_all(&[$val.to_byte()]).map_err(WriterError::Io)
-        };
-    }
-
     pub(super) fn write_record<W: Write>(w: &mut W, tx: &Transaction) -> Result<(), WriterError> {
         let desc = tx.description.as_bytes();
         let desc_len = desc.len() as u32;
         let size = MIN_RECORD_SIZE + desc_len;
+        let mut buf = Vec::with_capacity(HEADER_SIZE+size as usize);
 
-        write_all!(w, &MAGIC)?;
-        write_be!(w, size)?;
-        write_be!(w, tx.tx_id)?;
-        write_byte!(w, tx.tx_type)?;
-        write_be!(w, tx.from_user_id)?;
-        write_be!(w, tx.to_user_id)?;
-        write_be!(w, tx.amount)?;
-        write_be!(w, tx.timestamp)?;
-        write_byte!(w, tx.status)?;
-        write_be!(w, desc_len)?;
-        write_all!(w, desc)?;
+        macro_rules! push_be {
+            ($val:expr) => {
+                buf.extend_from_slice(&$val.to_be_bytes())
+            };
+        }
 
-        Ok(())
+        buf.extend_from_slice(&MAGIC);
+        push_be!(size);
+        push_be!(tx.tx_id);
+        buf.push(tx.tx_type.to_byte());
+        push_be!(tx.from_user_id);
+        push_be!(tx.to_user_id);
+        push_be!(tx.amount);
+        push_be!(tx.timestamp);
+        buf.push(tx.status.to_byte());
+        push_be!(desc_len);
+        buf.extend_from_slice(desc);
+
+        w.write_all(&buf).map_err(WriterError::Io)
     }
 }
 
