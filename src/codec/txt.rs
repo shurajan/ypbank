@@ -1,7 +1,7 @@
 use crate::codec::txt::parse::parse_kv;
 use crate::codec::{Decoder, Encoder};
 use crate::error::{ReaderError, WriterError};
-use crate::schema;
+use crate::transaction::schema;
 use crate::transaction::{Transaction, TransactionBuilder};
 use std::io::{BufRead, BufReader, Read, Write};
 

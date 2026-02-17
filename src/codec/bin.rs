@@ -3,7 +3,7 @@ use crate::codec::bin::parse::read_record;
 use crate::codec::bin::write::write_record;
 use crate::error::{ReaderError, WriterError};
 use crate::transaction::Transaction;
-use std::io::{BufReader, Cursor, Read, Write};
+use std::io::{BufReader, Read, Write};
 
 pub struct Bin;
 
@@ -203,7 +203,7 @@ mod write {
         let desc = tx.description.as_bytes();
         let desc_len = desc.len() as u32;
         let size = MIN_RECORD_SIZE + desc_len;
-        let mut buf = Vec::with_capacity(HEADER_SIZE+size as usize);
+        let mut buf = Vec::with_capacity(HEADER_SIZE + size as usize);
 
         macro_rules! push_be {
             ($val:expr) => {
@@ -227,15 +227,15 @@ mod write {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Test
+// ─────────────────────────────────────────────────────────────────────────
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::transaction::{TxStatus, TxType};
     use std::io::Cursor;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     fn sample_tx() -> Transaction {
         Transaction {

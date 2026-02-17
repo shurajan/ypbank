@@ -1,5 +1,5 @@
 use crate::error::ReaderError;
-use crate::schema;
+use crate::transaction::schema;
 use crate::transaction::{Transaction, TxStatus, TxType};
 
 #[derive(Default)]
@@ -15,11 +15,16 @@ pub struct TransactionBuilder {
 }
 
 impl TransactionBuilder {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn set(&mut self, key: &str, value: &str, line_no: usize) -> Result<(), ReaderError> {
+    pub(crate) fn set(
+        &mut self,
+        key: &str,
+        value: &str,
+        line_no: usize,
+    ) -> Result<(), ReaderError> {
         match key {
             schema::TX_ID => {
                 if self.tx_id.is_some() {
@@ -103,7 +108,7 @@ impl TransactionBuilder {
         Ok(())
     }
 
-    pub fn build(self, line_no: usize) -> Result<Transaction, ReaderError> {
+    pub(crate) fn build(self, line_no: usize) -> Result<Transaction, ReaderError> {
         let missing: Vec<String> = [
             (self.tx_id.is_none(), schema::TX_ID),
             (self.tx_type.is_none(), schema::TX_TYPE),
@@ -205,14 +210,14 @@ mod tests {
     // ─────────────────────────────────────────────────────────────────────
     fn complete_builder() -> TransactionBuilder {
         let mut b = TransactionBuilder::new();
-        let _ = b.set("TX_ID", "1234567890", 0);
-        let _ = b.set("TX_TYPE", "DEPOSIT", 0);
-        let _ = b.set("FROM_USER_ID", "0", 0);
-        let _ = b.set("TO_USER_ID", "9876543210", 0);
-        let _ = b.set("AMOUNT", "10000", 0);
-        let _ = b.set("TIMESTAMP", "1633036800000", 0);
-        let _ = b.set("STATUS", "SUCCESS", 0);
-        let _ = b.set("DESCRIPTION", "\"Test deposit\"", 0);
+        let _ = b.set(schema::TX_ID, "1234567890", 0);
+        let _ = b.set(schema::TX_TYPE, "DEPOSIT", 0);
+        let _ = b.set(schema::FROM_USER_ID, "0", 0);
+        let _ = b.set(schema::TO_USER_ID, "9876543210", 0);
+        let _ = b.set(schema::AMOUNT, "10000", 0);
+        let _ = b.set(schema::TIMESTAMP, "1633036800000", 0);
+        let _ = b.set(schema::STATUS, "SUCCESS", 0);
+        let _ = b.set(schema::DESCRIPTION, "\"Test deposit\"", 0);
         b
     }
 
@@ -247,14 +252,14 @@ mod tests {
             ("WITHDRAWAL", TxType::Withdrawal),
         ] {
             let mut b = TransactionBuilder::new();
-            assert!(b.set("TX_ID", "123", 0).is_ok());
-            assert!(b.set("TX_TYPE", s, 0).is_ok());
-            assert!(b.set("FROM_USER_ID", "0", 0).is_ok());
-            assert!(b.set("TO_USER_ID", "456", 0).is_ok());
-            assert!(b.set("AMOUNT", "100", 0).is_ok());
-            assert!(b.set("TIMESTAMP", "1000", 0).is_ok());
-            assert!(b.set("STATUS", "SUCCESS", 0).is_ok());
-            assert!(b.set("DESCRIPTION", "\"test\"", 0).is_ok());
+            assert!(b.set(schema::TX_ID, "123", 0).is_ok());
+            assert!(b.set(schema::TX_TYPE, s, 0).is_ok());
+            assert!(b.set(schema::FROM_USER_ID, "0", 0).is_ok());
+            assert!(b.set(schema::TO_USER_ID, "456", 0).is_ok());
+            assert!(b.set(schema::AMOUNT, "100", 0).is_ok());
+            assert!(b.set(schema::TIMESTAMP, "1000", 0).is_ok());
+            assert!(b.set(schema::STATUS, "SUCCESS", 0).is_ok());
+            assert!(b.set(schema::DESCRIPTION, "\"test\"", 0).is_ok());
 
             let result = b.build(0);
             assert!(result.is_ok());
@@ -273,14 +278,14 @@ mod tests {
             ("PENDING", TxStatus::Pending),
         ] {
             let mut b = TransactionBuilder::new();
-            assert!(b.set("TX_ID", "123", 0).is_ok());
-            assert!(b.set("TX_TYPE", "DEPOSIT", 0).is_ok());
-            assert!(b.set("FROM_USER_ID", "0", 0).is_ok());
-            assert!(b.set("TO_USER_ID", "456", 0).is_ok());
-            assert!(b.set("AMOUNT", "100", 0).is_ok());
-            assert!(b.set("TIMESTAMP", "1000", 0).is_ok());
-            assert!(b.set("STATUS", s, 0).is_ok());
-            assert!(b.set("DESCRIPTION", "\"test\"", 0).is_ok());
+            assert!(b.set(schema::TX_ID, "123", 0).is_ok());
+            assert!(b.set(schema::TX_TYPE, "DEPOSIT", 0).is_ok());
+            assert!(b.set(schema::FROM_USER_ID, "0", 0).is_ok());
+            assert!(b.set(schema::TO_USER_ID, "456", 0).is_ok());
+            assert!(b.set(schema::AMOUNT, "100", 0).is_ok());
+            assert!(b.set(schema::TIMESTAMP, "1000", 0).is_ok());
+            assert!(b.set(schema::STATUS, s, 0).is_ok());
+            assert!(b.set(schema::DESCRIPTION, "\"test\"", 0).is_ok());
 
             let result = b.build(0);
             assert!(result.is_ok());
@@ -294,14 +299,14 @@ mod tests {
     #[test]
     fn set_duplicate_field_error() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("TX_ID", "123", 0).is_ok());
+        assert!(b.set(schema::TX_ID, "123", 0).is_ok());
 
-        let err = b.set("TX_ID", "456", 5);
+        let err = b.set(schema::TX_ID, "456", 5);
         assert!(err.is_err());
 
         if let Err(ReaderError::DuplicateField { line_no, field }) = err {
             assert_eq!(line_no, 5);
-            assert_eq!(field, "TX_ID");
+            assert_eq!(field, schema::TX_ID);
         } else {
             panic!("expected DuplicateField");
         }
@@ -334,8 +339,8 @@ mod tests {
         if let Err(ReaderError::MissingFields { line_no, fields }) = err {
             assert_eq!(line_no, 42);
             assert_eq!(fields.len(), 8);
-            assert!(fields.contains(&"TX_ID".to_string()));
-            assert!(fields.contains(&"DESCRIPTION".to_string()));
+            assert!(fields.contains(&schema::TX_ID.to_string()));
+            assert!(fields.contains(&schema::DESCRIPTION.to_string()));
         } else {
             panic!("expected MissingFields");
         }
@@ -344,8 +349,8 @@ mod tests {
     #[test]
     fn build_partial_reports_missing() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("TX_ID", "123", 0).is_ok());
-        assert!(b.set("TX_TYPE", "DEPOSIT", 0).is_ok());
+        assert!(b.set(schema::TX_ID, "123", 0).is_ok());
+        assert!(b.set(schema::TX_TYPE, "DEPOSIT", 0).is_ok());
 
         let err = b.build(5);
         assert!(err.is_err());
@@ -353,9 +358,9 @@ mod tests {
         if let Err(ReaderError::MissingFields { line_no, fields }) = err {
             assert_eq!(line_no, 5);
             assert_eq!(fields.len(), 6);
-            assert!(!fields.contains(&"TX_ID".to_string()));
-            assert!(!fields.contains(&"TX_TYPE".to_string()));
-            assert!(fields.contains(&"AMOUNT".to_string()));
+            assert!(!fields.contains(&schema::TX_ID.to_string()));
+            assert!(!fields.contains(&schema::TX_TYPE.to_string()));
+            assert!(fields.contains(&schema::AMOUNT.to_string()));
         } else {
             panic!("expected MissingFields");
         }
@@ -384,7 +389,7 @@ mod tests {
     #[test]
     fn set_invalid_u64_negative() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("TX_ID", "-1", 3);
+        let err = b.set(schema::TX_ID, "-1", 3);
         assert!(err.is_err());
 
         if let Err(ReaderError::InvalidFieldValue {
@@ -394,7 +399,7 @@ mod tests {
         }) = err
         {
             assert_eq!(line_no, 3);
-            assert_eq!(field, "TX_ID");
+            assert_eq!(field, schema::TX_ID);
             assert_eq!(value, "-1");
         } else {
             panic!("expected InvalidFieldValue");
@@ -404,22 +409,22 @@ mod tests {
     #[test]
     fn set_invalid_u64_overflow() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("AMOUNT", "18446744073709551616", 0);
+        let err = b.set(schema::AMOUNT, "18446744073709551616", 0);
 
         assert!(matches!(
             err,
-            Err(ReaderError::InvalidFieldValue { field, .. }) if field == "AMOUNT"
+            Err(ReaderError::InvalidFieldValue { field, .. }) if field == schema::AMOUNT
         ));
     }
 
     #[test]
     fn set_invalid_u64_non_numeric() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("TIMESTAMP", "abc", 0);
+        let err = b.set(schema::TIMESTAMP, "abc", 0);
 
         assert!(matches!(
             err,
-            Err(ReaderError::InvalidFieldValue { field, .. }) if field == "TIMESTAMP"
+            Err(ReaderError::InvalidFieldValue { field, .. }) if field == schema::TIMESTAMP
         ));
     }
 
@@ -429,7 +434,7 @@ mod tests {
     #[test]
     fn set_invalid_tx_type() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("TX_TYPE", "INVALID", 7);
+        let err = b.set(schema::TX_TYPE, "INVALID", 7);
         assert!(err.is_err());
 
         if let Err(ReaderError::InvalidFieldValue {
@@ -439,7 +444,7 @@ mod tests {
         }) = err
         {
             assert_eq!(line_no, 7);
-            assert_eq!(field, "TX_TYPE");
+            assert_eq!(field, schema::TX_TYPE);
             assert_eq!(value, "INVALID");
         } else {
             panic!("expected InvalidFieldValue");
@@ -449,10 +454,10 @@ mod tests {
     #[test]
     fn set_tx_type_case_sensitive() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("TX_TYPE", "Deposit", 0).is_err());
+        assert!(b.set(schema::TX_TYPE, "Deposit", 0).is_err());
 
         let mut b2 = TransactionBuilder::new();
-        assert!(b2.set("TX_TYPE", "deposit", 0).is_err());
+        assert!(b2.set(schema::TX_TYPE, "deposit", 0).is_err());
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -461,11 +466,11 @@ mod tests {
     #[test]
     fn set_invalid_status() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("STATUS", "UNKNOWN", 0);
+        let err = b.set(schema::STATUS, "UNKNOWN", 0);
 
         assert!(matches!(
             err,
-            Err(ReaderError::InvalidFieldValue { field, .. }) if field == "STATUS"
+            Err(ReaderError::InvalidFieldValue { field, .. }) if field == schema::STATUS
         ));
     }
 
@@ -476,37 +481,37 @@ mod tests {
     fn set_description_valid_quotes() {
         for desc in ["\"hello\"", "\"\"", "\" \"", "\"a, b: c\""] {
             let mut b = TransactionBuilder::new();
-            assert!(b.set("DESCRIPTION", desc, 0).is_ok());
+            assert!(b.set(schema::DESCRIPTION, desc, 0).is_ok());
         }
     }
 
     #[test]
     fn set_description_missing_quotes() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("DESCRIPTION", "no quotes", 0);
+        let err = b.set(schema::DESCRIPTION, "no quotes", 0);
 
         assert!(matches!(
             &err,
-            Err(ReaderError::InvalidRow { reason, .. }) if reason.contains("DESCRIPTION")
+            Err(ReaderError::InvalidRow { reason, .. }) if reason.contains(schema::DESCRIPTION)
         ));
     }
 
     #[test]
     fn set_description_missing_opening_quote() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("DESCRIPTION", "hello\"", 0).is_err());
+        assert!(b.set(schema::DESCRIPTION, "hello\"", 0).is_err());
     }
 
     #[test]
     fn set_description_missing_closing_quote() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("DESCRIPTION", "\"hello", 0).is_err());
+        assert!(b.set(schema::DESCRIPTION, "\"hello", 0).is_err());
     }
 
     #[test]
     fn set_description_single_quote() {
         let mut b = TransactionBuilder::new();
-        assert!(b.set("DESCRIPTION", "\"", 0).is_err());
+        assert!(b.set(schema::DESCRIPTION, "\"", 0).is_err());
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -515,7 +520,7 @@ mod tests {
     #[test]
     fn line_no_in_set_error() {
         let mut b = TransactionBuilder::new();
-        let err = b.set("TX_ID", "bad", 123);
+        let err = b.set(schema::TX_ID, "bad", 123);
 
         if let Err(ReaderError::InvalidFieldValue { line_no, .. }) = err {
             assert_eq!(line_no, 123);

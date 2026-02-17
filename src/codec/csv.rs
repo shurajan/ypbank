@@ -1,11 +1,58 @@
 use crate::error::{ReaderError, WriterError};
-use crate::transaction::{Transaction, TransactionBuilder};
-use crate::{Decoder, Encoder, schema};
+use crate::transaction::{Transaction, schema};
+use crate::{Decoder, Encoder};
 use std::io::{BufRead, BufReader, Read, Write};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
+/// CSV transaction codec.
+///
+/// This codec implements [`Decoder`] and [`Encoder`] for the CSV format.
+///
+/// The expected input format contains a header row:
+///
+/// ```text
+/// TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
+/// ```
+///
+/// ## Example: Decode a single transaction
+///
+/// ```
+/// use ypbank::{Decoder, Csv};
+///
+/// let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
+/// 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"Initial funding"
+/// "#;
+///
+/// let txs = Csv.decode(&mut data.as_bytes()).unwrap();
+///
+/// assert_eq!(txs.len(), 1);
+/// assert_eq!(txs[0].tx_id, 1001);
+/// ```
+///
+/// ## Example: Decode multiple transactions
+///
+/// ```
+/// use ypbank::{Decoder, Csv};
+///
+/// let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
+/// 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"First"
+/// 1002,TRANSFER,501,502,15000,1672534800000,FAILURE,"Second"
+/// "#;
+///
+/// let txs = Csv.decode(&mut data.as_bytes()).unwrap();
+///
+/// assert_eq!(txs.len(), 2);
+/// ```
+///
+/// ## Errors
+///
+/// Returns [`ReaderError`] if:
+///
+/// - the CSV is malformed
+/// - required fields are missing
+/// - transaction type or status cannot be parsed
 pub struct Csv;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,7 +108,7 @@ impl Encoder for Csv {
 // ─────────────────────────────────────────────────────────────────────────────
 mod parse {
     use crate::error::ReaderError;
-    use crate::schema;
+    use crate::transaction::schema;
     use crate::transaction::{Transaction, TransactionBuilder};
 
     pub(super) fn is_blank(s: &str) -> bool {
