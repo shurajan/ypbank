@@ -10,6 +10,12 @@ built-in support for:
 - **Plain text** (`Txt`)
 - **Binary** (`Bin`)
 
+## Formats
+
+- [CSV Specification](docs/YPBankCsvFormat_ru.md)
+- [TXT Specification](docs/YPBankTextFormat_ru.md)
+- [Binary Specification](docs/YPBankBinFormat_ru.md)
+
 ---
 
 ## Installation
@@ -22,6 +28,7 @@ ypbank = "0.1"
 ```
 
 ---
+
 
 ## Usage
 
