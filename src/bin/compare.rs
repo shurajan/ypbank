@@ -1,19 +1,21 @@
+use std::fs::File;
+use std::io::{BufReader};
+
+use ypbank::{Csv, Decoder};
+
 fn main() {
-    use std::io::Cursor;
-    use ypbank::{Csv, Encoder, Transaction, TxStatus, TxType};
 
-    let txs = vec![Transaction {
-        tx_id: 1001,
-        tx_type: TxType::Deposit,
-        from_user_id: 0,
-        to_user_id: 501,
-        amount: 50000,
-        timestamp: 1672531200000,
-        status: TxStatus::Success,
-        description: "\"Test\"".to_string(),
-    }];
+    let path1 = "tests/data/records_example.csv";
+    let file1 = File::open(path1).expect("failed to open bin file");
+    let mut reader1 = BufReader::new(file1);
+    let txs1 = Csv.decode(&mut reader1).expect("failed to decode transactions");
 
-    let mut buffer = Cursor::new(Vec::new());
-    let result = Csv.encode(&txs, &mut buffer);
-    assert!(result.is_ok());
+    let path2 = "tests/data/records_example.csv";
+    let file2 = File::open(path2).expect("failed to open bin file");
+    let mut reader2 = BufReader::new(file2);
+    let txs2 = Csv.decode(&mut reader2).expect("failed to decode transactions");
+
+
+    println!("Decoded {} transactions:\n", txs1.len());
+    println!("Decoded {} transactions:\n", txs2.len());
 }

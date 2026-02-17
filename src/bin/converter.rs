@@ -1,49 +1,41 @@
-use std::io::Cursor;
-use ypbank::{Decoder, Txt};
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Write};
+
+use ypbank::{Bin,Csv,Txt, Decoder, Encoder, };
 
 fn main() {
-    let data = br#"# Record 1 (Deposit)
-TX_ID: 1234567890123456
-TX_TYPE: DEPOSIT
-FROM_USER_ID: 0
-TO_USER_ID: 9876543210987654
-AMOUNT: 10000
-TIMESTAMP: 1633036800000
-STATUS: SUCCESS
-DESCRIPTION: "Terminal deposit"
+    // Path to the binary test file
+    let path = "tests/data/records_example.bin";
 
-# Record 2 (Transfer)
-TX_ID: 2312321321321321
-TIMESTAMP: 1633056800000
-STATUS: FAILURE
-TX_TYPE: TRANSFER
-FROM_USER_ID: 1231231231231231
-TO_USER_ID: 9876543210987654
-AMOUNT: 1000
-DESCRIPTION: "User transfer"
+    // Open file
+    let file = File::open(path).expect("failed to open bin file");
 
-# Record 3 (Withdrawal)
-TX_ID: 3213213213213213
-AMOUNT: 100
-TX_TYPE: WITHDRAWAL
-FROM_USER_ID: 9876543210987654
-TO_USER_ID: 0
-TIMESTAMP: 1633066800000
-STATUS: SUCCESS
-DESCRIPTION: "User withdrawal"
-"#;
+    // Wrap into buffered reader
+    let mut reader = BufReader::new(file);
+    let txs = Bin.decode(&mut reader).expect("failed to decode transactions");
 
-    let mut cursor = Cursor::new(data);
+    let csv_file = File::create("tests/data/test_output.csv").unwrap();
+    let mut csv_writer = BufWriter::new(csv_file);
+    Csv.encode(&*txs, &mut csv_writer).expect("failed to encode transactions");
+    csv_writer.flush().unwrap();
 
-    match Txt.decode(&mut cursor) {
-        Ok(txs) => {
-            println!("Parsed {} transactions:", txs.len());
-            for tx in &txs {
-                println!("  {:?}", tx);
-            }
-        }
-        Err(e) => {
-            eprintln!("Error: {}", e);
-        }
+    let txt_file = File::create("tests/data/test_output.txt").unwrap();
+    let mut txt_writer = BufWriter::new(txt_file);
+    Txt.encode(&*txs, &mut txt_writer).expect("failed to encode transactions");
+    txt_writer.flush().unwrap();
+
+    println!("Decoded {} transactions:\n", txs.len());
+
+    for (i, tx) in txs.iter().enumerate() {
+        println!("--- Transaction {} ---", i + 1);
+        println!("ID:          {}", tx.tx_id);
+        println!("Type:        {}", tx.tx_type);
+        println!("From user:   {}", tx.from_user_id);
+        println!("To user:     {}", tx.to_user_id);
+        println!("Amount:      {}", tx.amount);
+        println!("Timestamp:   {}", tx.timestamp);
+        println!("Status:      {}", tx.status);
+        println!("Description: {}", tx.description);
+        println!();
     }
 }
