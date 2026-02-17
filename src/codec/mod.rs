@@ -7,7 +7,7 @@ pub use csv::Csv;
 pub use txt::Txt;
 
 use crate::error::{ReaderError, WriterError};
-use crate::transaction::{Transaction, TxStatus, TxType};
+use crate::transaction::Transaction;
 use std::io::{Read, Write};
 
 /// A transaction decoder.
@@ -44,6 +44,7 @@ use std::io::{Read, Write};
 /// assert!(!txs.is_empty());
 /// ```
 pub trait Decoder {
+    /// Decodes transactions from the given reader.
     fn decode<R: Read>(&self, r: &mut R) -> Result<Vec<Transaction>, ReaderError>;
 }
 
@@ -85,5 +86,6 @@ pub trait Decoder {
 /// assert!(result.is_ok());
 /// ```
 pub trait Encoder {
+    /// Encodes transactions into the given writer.
     fn encode<W: Write>(&self, txs: &[Transaction], w: &mut W) -> Result<(), WriterError>;
 }

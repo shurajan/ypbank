@@ -3,6 +3,12 @@
 //! `ypbank` is a transaction codec library that provides tools for
 //! encoding and decoding financial transactions in multiple formats.
 //!
+//! //! ## Design
+//!
+//! Codecs implement [`Decoder`] and [`Encoder`] and operate on any
+//! type implementing [`Read`] or [`Write`], making them compatible
+//! with files, network streams, and in-memory buffers.
+//!
 //! ## Supported Formats
 //!
 //! - [`Csv`] — CSV encoding/decoding
@@ -34,8 +40,14 @@
 //! All decoding operations return [`ReaderError`] on invalid input,
 //! while encoding operations return [`WriterError`].
 #![warn(missing_docs)]
+
+/// Format codecs (CSV/TXT/BIN) and the core [`Decoder`] / [`Encoder`] traits.pub mod codec;
 pub mod codec;
+
+/// Error types returned by decoding and encoding operations.
 pub mod error;
+
+/// Core data model: [`Transaction`], [`TxType`], and [`TxStatus`].
 pub mod transaction;
 
 pub use codec::{Bin, Csv, Txt};

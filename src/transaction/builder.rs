@@ -2,15 +2,54 @@ use crate::error::ReaderError;
 use crate::transaction::schema;
 use crate::transaction::{Transaction, TxStatus, TxType};
 
+/// A builder for constructing [`Transaction`] values incrementally.
+///
+/// `TransactionBuilder` is primarily used by decoders (such as [`Csv`] and ['Txt'])
+/// to assemble a transaction record field-by-field while validating input.
+///
+/// ## Example
+///
+/// ```
+/// use ypbank::{Transaction, TxType, TxStatus};
+/// use ypbank::transaction::TransactionBuilder;
+///
+/// let tx = TransactionBuilder::default()
+///     // .tx_id(1001)
+///     // .tx_type(TxType::Deposit)
+///     // .amount(50_000)
+///     // .status(TxStatus::Success)
+///     // .description("Initial funding")
+///     // .build()
+///     ;
+/// ```
+///
+/// ## Notes
+/// - A transaction is considered valid only when all required fields are set.
+/// - Missing fields should result in a [`ReaderError::MissingFields`] during decoding.
 #[derive(Default)]
 pub struct TransactionBuilder {
+    /// Transaction identifier (`TX_ID`).
     tx_id: Option<u64>,
+
+    /// Transaction type (`TX_TYPE`).
     tx_type: Option<TxType>,
+
+    /// Sender user identifier (`FROM_USER_ID`).
     from_user_id: Option<u64>,
+
+    /// Receiver user identifier (`TO_USER_ID`).
     to_user_id: Option<u64>,
+
+    /// Transaction amount in the smallest currency unit (`AMOUNT`).
     amount: Option<u64>,
+
+    /// Unix timestamp in milliseconds (`TIMESTAMP`).
     timestamp: Option<u64>,
+
+    /// Execution status (`STATUS`).
     status: Option<TxStatus>,
+
+    /// Transaction description (`DESCRIPTION`).
     description: Option<String>,
 }
 

@@ -8,6 +8,88 @@ use std::io::{BufRead, BufReader, Read, Write};
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
+/// TXT transaction codec.
+///
+/// [`Txt`] provides plain-text decoding and encoding for [`Transaction`] values.
+///
+/// ## Format Overview
+///
+/// The TXT representation is a human-readable key/value format.
+///
+/// - Each transaction is written as a block of text.
+/// - Fields are stored as `KEY: VALUE` pairs.
+/// - Transaction records are separated by one or more empty lines.
+///
+/// This format is intended primarily for debugging, logs, and simple
+/// text-based exports.
+///
+/// ## Record Layout
+///
+/// A single record contains the following fields (order is not significant):
+///
+/// - `TX_ID` — transaction ID (`u64`)
+/// - `TX_TYPE` — transaction type (`DEPOSIT`, `TRANSFER`, `WITHDRAWAL`)
+/// - `FROM_USER_ID` — sender user ID (`u64`)
+/// - `TO_USER_ID` — receiver user ID (`u64`)
+/// - `AMOUNT` — amount in smallest currency unit (`u64`)
+/// - `TIMESTAMP` — Unix timestamp in milliseconds (`u64`)
+/// - `STATUS` — transaction status (`SUCCESS`, `FAILURE`, `PENDING`)
+/// - `DESCRIPTION` — quoted UTF-8 text
+///
+/// Example record:
+///
+/// ```text
+/// DESCRIPTION: "Record number 2"
+/// TIMESTAMP: 1633036920000
+/// STATUS: PENDING
+/// AMOUNT: 200
+/// TX_ID: 1000000000000001
+/// TX_TYPE: TRANSFER
+/// FROM_USER_ID: 9223372036854775807
+/// TO_USER_ID: 9223372036854775807
+/// ```
+///
+/// ## Example: Round-trip Encoding/Decoding
+///
+/// ```
+/// use std::io::Cursor;
+/// use ypbank::{Decoder, Encoder, Txt, Transaction, TxType, TxStatus};
+///
+/// let tx = Transaction {
+///     tx_id: 1001,
+///     tx_type: TxType::Deposit,
+///     from_user_id: 0,
+///     to_user_id: 501,
+///     amount: 50_000,
+///     timestamp: 1672531200000,
+///     status: TxStatus::Success,
+///     description: "\"Initial funding\"".to_string(),
+/// };
+///
+/// // Encode transaction into a TXT buffer
+/// let mut buffer = Cursor::new(Vec::new());
+/// Txt.encode(&[tx.clone()], &mut buffer).unwrap();
+///
+/// // Decode it back from the buffer
+/// buffer.set_position(0);
+/// let decoded = Txt.decode(&mut buffer).unwrap();
+///
+/// assert_eq!(decoded.len(), 1);
+/// assert_eq!(decoded[0], tx);
+/// ```
+///
+/// ## Errors
+///
+/// Returns [`ReaderError`] if:
+///
+/// - the input text is malformed
+/// - required fields are missing
+/// - `TX_TYPE` or `STATUS` cannot be parsed
+///
+/// Returns [`WriterError`] if:
+///
+/// - writing to the output stream fails
+/// - transactions cannot be represented in the TXT format
 pub struct Txt;
 
 // ─────────────────────────────────────────────────────────────────────────────

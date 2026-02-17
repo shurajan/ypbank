@@ -5,6 +5,75 @@ use crate::error::{ReaderError, WriterError};
 use crate::transaction::Transaction;
 use std::io::{BufReader, Read, Write};
 
+/// Binary transaction codec.
+///
+/// [`Bin`] provides binary decoding and encoding  for
+/// [`Transaction`] values.
+///
+/// ## Format Overview
+///
+/// The binary representation consists of:
+///
+/// - a fixed magic header (to identify valid input)
+/// - one or more transaction records
+/// - fields encoded in a strict order
+///
+/// Each record contains:
+/// - transaction ID (`u64`)
+/// - transaction type (`u8`)
+/// - sender/receiver IDs (`u64`)
+/// - amount (`u64`)
+/// - timestamp (`u64`)
+/// - status (`u8`)
+/// - description length + UTF-8 string payload
+///
+/// ## Example: Round-trip Encoding/Decoding
+///
+/// ```
+/// use std::io::Cursor;
+/// use ypbank::{Bin, Decoder, Encoder, Transaction, TxType, TxStatus};
+///
+/// let tx = Transaction {
+///     tx_id: 12345,
+///     tx_type: TxType::Transfer,
+///     from_user_id: 100,
+///     to_user_id: 200,
+///     amount: 5000,
+///     timestamp: 1700000000000,
+///     status: TxStatus::Success,
+///     description: "\"Test transaction\"".to_string(),
+/// };
+///
+/// // Encode into a byte buffer
+/// let mut buf = Vec::new();
+/// Bin.encode(&[tx.clone()], &mut buf).unwrap();
+///
+/// // Decode back from bytes
+/// let mut cursor = Cursor::new(buf);
+/// let decoded = Bin.decode(&mut cursor).unwrap();
+///
+/// assert_eq!(decoded.len(), 1);
+/// assert_eq!(decoded[0], tx);
+/// ```
+///
+/// ## Errors
+///
+/// Decoding may return [`ReaderError`] if:
+///
+/// - the magic header is missing or invalid ([`ReaderError::InvalidMagic`])
+/// - the binary structure is corrupted or incomplete
+/// - enum tags contain unknown values
+///
+/// Encoding may return [`WriterError`] if:
+///
+/// - writing to the output stream fails
+/// - the transaction cannot be represented in the binary format
+///
+/// ## Notes
+///
+/// - The binary format is stable and intended to be deterministic.
+/// - This codec is best suited for internal storage or trusted communication,
+///   not for manual editing.
 pub struct Bin;
 
 const MAGIC: [u8; 4] = [0x59, 0x50, 0x42, 0x4E];

@@ -16,34 +16,33 @@ use std::io::{BufRead, BufReader, Read, Write};
 /// TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
 /// ```
 ///
-/// ## Example: Decode a single transaction
+/// ## Example: Round-trip Encoding/Decoding
 ///
 /// ```
-/// use ypbank::{Decoder, Csv};
+/// use std::io::Cursor;
+/// use ypbank::{Decoder, Encoder, Csv, Transaction, TxType, TxStatus};
 ///
-/// let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
-/// 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"Initial funding"
-/// "#;
+/// let tx = Transaction {
+///     tx_id: 1001,
+///     tx_type: TxType::Deposit,
+///     from_user_id: 0,
+///     to_user_id: 501,
+///     amount: 50_000,
+///     timestamp: 1672531200000,
+///     status: TxStatus::Success,
+///     description: "\"Initial funding\"".to_string(),
+/// };
 ///
-/// let txs = Csv.decode(&mut data.as_bytes()).unwrap();
+/// // Encode transactions into a CSV buffer
+/// let mut buf = Vec::new();
+/// Csv.encode(&[tx.clone()], &mut buf).unwrap();
 ///
-/// assert_eq!(txs.len(), 1);
-/// assert_eq!(txs[0].tx_id, 1001);
-/// ```
+/// // Decode them back from the buffer
+/// let mut cursor = Cursor::new(buf);
+/// let decoded = Csv.decode(&mut cursor).unwrap();
 ///
-/// ## Example: Decode multiple transactions
-///
-/// ```
-/// use ypbank::{Decoder, Csv};
-///
-/// let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
-/// 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"First"
-/// 1002,TRANSFER,501,502,15000,1672534800000,FAILURE,"Second"
-/// "#;
-///
-/// let txs = Csv.decode(&mut data.as_bytes()).unwrap();
-///
-/// assert_eq!(txs.len(), 2);
+/// assert_eq!(decoded.len(), 1);
+/// assert_eq!(decoded[0], tx);
 /// ```
 ///
 /// ## Errors

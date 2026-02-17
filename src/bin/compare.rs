@@ -1,5 +1,3 @@
-use std::io::Cursor;
-
 fn main() {
     use std::io::Cursor;
     use ypbank::{Csv, Encoder, Transaction, TxStatus, TxType};

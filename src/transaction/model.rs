@@ -1,4 +1,3 @@
-use std::io::{Read, Write};
 /// A single financial transaction record.
 ///
 /// Transactions are the core data model of the `ypbank` crate and can be
