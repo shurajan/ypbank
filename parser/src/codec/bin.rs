@@ -31,7 +31,7 @@ use std::io::{BufReader, Read, Write};
 ///
 /// ```
 /// use std::io::Cursor;
-/// use ypbank::{Bin, Decoder, Encoder, Transaction, TxType, TxStatus};
+/// use parser::{Bin, Decoder, Encoder, Transaction, TxType, TxStatus};
 ///
 /// let tx = Transaction {
 ///     tx_id: 12345,

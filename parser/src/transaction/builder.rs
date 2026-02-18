@@ -10,8 +10,8 @@ use crate::transaction::{Transaction, TxStatus, TxType};
 /// ## Example
 ///
 /// ```
-/// use ypbank::{Transaction, TxType, TxStatus};
-/// use ypbank::transaction::TransactionBuilder;
+/// use parser::{Transaction, TxType, TxStatus};
+/// use parser::transaction::TransactionBuilder;
 ///
 /// let tx = TransactionBuilder::default()
 ///     // .tx_id(1001)

@@ -20,7 +20,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 ///
 /// ```
 /// use std::io::Cursor;
-/// use ypbank::{Decoder, Encoder, Csv, Transaction, TxType, TxStatus};
+/// use parser::{Decoder, Encoder, Csv, Transaction, TxType, TxStatus};
 ///
 /// let tx = Transaction {
 ///     tx_id: 1001,

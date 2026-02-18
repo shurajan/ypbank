@@ -1,6 +1,11 @@
-[package]
-name = "ypbank"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "2"
+members = [
+    "comparer",
+    "converter",
+    "parser",
+]
 
-[dependencies]
+[workspace.dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"

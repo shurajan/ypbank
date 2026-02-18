@@ -23,7 +23,7 @@
 /// ## Example
 ///
 /// ```
-/// use ypbank::{Transaction, TxType, TxStatus};
+/// use parser::{Transaction, TxType, TxStatus};
 ///
 /// let tx = Transaction {
 ///     tx_id: 1001,

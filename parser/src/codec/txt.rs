@@ -53,7 +53,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 ///
 /// ```
 /// use std::io::Cursor;
-/// use ypbank::{Decoder, Encoder, Txt, Transaction, TxType, TxStatus};
+/// use parser::{Decoder, Encoder, Txt, Transaction, TxType, TxStatus};
 ///
 /// let tx = Transaction {
 ///     tx_id: 1001,
@@ -146,7 +146,7 @@ impl Encoder for Txt {
         for tx in txs {
             writeln!(
                 w,
-                "{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n\n",
+                "{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n{}:{}\n",
                 schema::TX_ID,
                 tx.tx_id,
                 schema::TX_TYPE,

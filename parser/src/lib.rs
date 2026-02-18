@@ -23,7 +23,7 @@
 //! ## Example: Decoding CSV Transactions
 //!
 //! ```
-//! use ypbank::{Decoder, Csv};
+//! use parser::{Decoder, Csv};
 //!
 //! let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
 //! 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"Initial funding"

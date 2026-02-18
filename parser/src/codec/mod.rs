@@ -34,7 +34,7 @@ use std::io::{Read, Write};
 /// ## Example
 ///
 /// ```
-/// use ypbank::{Decoder, Csv};
+/// use parser::{Decoder, Csv};
 ///
 /// let data = r#"TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION
 /// 1001,DEPOSIT,0,501,50000,1672531200000,SUCCESS,"Initial funding"
@@ -68,7 +68,7 @@ pub trait Decoder {
 ///
 /// ```
 /// use std::io::Cursor;
-/// use ypbank::{Encoder, Csv, Transaction, TxStatus, TxType};
+/// use parser::{Encoder, Csv, Transaction, TxStatus, TxType};
 ///
 /// let txs = vec![Transaction {
 ///    tx_id: 1001,
