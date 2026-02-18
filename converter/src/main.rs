@@ -1,10 +1,10 @@
+use anyhow::Context;
 use clap::{Parser, ValueEnum};
+use parser::{Bin, Csv, Decoder, Encoder, Transaction, Txt};
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, BufWriter, Write};
 use std::path::PathBuf;
-use anyhow::Context;
-use parser::{Bin, Csv, Txt, Decoder, Encoder, Transaction};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -28,7 +28,7 @@ struct Args {
     output_format: Format,
 }
 
-#[derive(Debug,Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum)]
 enum Format {
     Csv,
     Txt,
@@ -57,7 +57,7 @@ fn decode(format: &Format, reader: &mut impl io::Read) -> anyhow::Result<Vec<Tra
         Format::Txt => Txt.decode(reader),
         Format::Bin => Bin.decode(reader),
     }
-        .context("failed to decode transactions")
+    .context("failed to decode transactions")
 }
 
 fn encode(format: &Format, txs: &[Transaction], writer: &mut impl io::Write) -> anyhow::Result<()> {
@@ -66,5 +66,5 @@ fn encode(format: &Format, txs: &[Transaction], writer: &mut impl io::Write) -> 
         Format::Txt => Txt.encode(txs, writer),
         Format::Bin => Bin.encode(txs, writer),
     }
-        .context("failed to encode transactions")
+    .context("failed to encode transactions")
 }

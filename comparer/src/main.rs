@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use clap::{Parser, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -23,13 +23,12 @@ struct Args {
     output_format: Format,
 }
 
-#[derive(Debug,Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum)]
 enum Format {
     Csv,
     Txt,
     Bin,
 }
-
 
 fn main() {
     let args = Args::parse();
