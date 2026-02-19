@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// A single financial transaction record.
 ///
 /// Transactions are the core data model of the `ypbank` crate and can be
@@ -70,6 +72,23 @@ pub struct Transaction {
     ///
     /// In CSV or TXT format, this field is always quoted.
     pub description: String,
+}
+
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "tx_id={} type={:?} from={} to={} amount={} status={:?} ts={} desc={}",
+            self.tx_id,
+            self.tx_type,
+            self.from_user_id,
+            self.to_user_id,
+            self.amount,
+            self.status,
+            self.timestamp,
+            self.description,
+        )
+    }
 }
 
 /// Transaction type (`TX_TYPE`).

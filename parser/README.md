@@ -12,9 +12,9 @@ built-in support for:
 
 ## Formats
 
-- [CSV Specification](docs/YPBankCsvFormat_ru.md)
+- [CSV Specification](../docs/YPBankCsvFormat_ru.md)
 - [TXT Specification](docs/YPBankTextFormat_ru.md)
-- [Binary Specification](docs/YPBankBinFormat_ru.md)
+- [Binary Specification](../docs/YPBankBinFormat_ru.md)
 
 ---
 

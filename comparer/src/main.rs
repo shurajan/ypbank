@@ -58,11 +58,20 @@ fn main() -> anyhow::Result<()> {
 
     let result = compare(&txs1, &txs2);
 
+    if result.is_empty() {
+        println!(
+            " Output: The transaction records in '{}' and '{}' are identical.",
+            args.file1.display(),
+            args.file2.display()
+        );
+        return Ok(());
+    }
+
     for (key, diff) in result {
-        match diff {
-            Diff::OnlyLeft(r) => println!("[{key}] only in file 1 {r:?}"),
-            Diff::OnlyRight(r) => println!("[{key}] only in file 2 {r:?}"),
-            Diff::Mismatched(l, r) => println!("[{key}] mismatched {l:?} -> {r:?}"),
+        match &diff {
+            Diff::OnlyLeft(_) => println!("[{key}] only in {}\n{diff}", args.file1.display()),
+            Diff::OnlyRight(_) => println!("[{key}] only in {}\n{diff}", args.file2.display()),
+            Diff::Mismatched(_, _) => println!("[{key}] mismatched\n{diff}"),
         }
     }
 
@@ -83,6 +92,69 @@ enum Diff<'a> {
     OnlyLeft(&'a Transaction),
     OnlyRight(&'a Transaction),
     Mismatched(&'a Transaction, &'a Transaction),
+}
+
+use std::fmt;
+
+impl<'a> fmt::Display for Diff<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Diff::OnlyLeft(tx) => {
+                writeln!(f, "  < {tx}")
+            }
+            Diff::OnlyRight(tx) => {
+                writeln!(f, "  > {tx}")
+            }
+            Diff::Mismatched(left, right) => {
+                writeln!(f, "  < {left}")?;
+                writeln!(f, "  > {right}")?;
+
+                // показываем какие конкретно поля расходятся
+                if left.amount != right.amount {
+                    writeln!(f, "    ~ amount:  {} -> {}", left.amount, right.amount)?;
+                }
+                if left.status != right.status {
+                    writeln!(f, "    ~ status:  {:?} -> {:?}", left.status, right.status)?;
+                }
+                if left.tx_type != right.tx_type {
+                    writeln!(
+                        f,
+                        "    ~ tx_type: {:?} -> {:?}",
+                        left.tx_type, right.tx_type
+                    )?;
+                }
+                if left.from_user_id != right.from_user_id {
+                    writeln!(
+                        f,
+                        "    ~ from:    {} -> {}",
+                        left.from_user_id, right.from_user_id
+                    )?;
+                }
+                if left.to_user_id != right.to_user_id {
+                    writeln!(
+                        f,
+                        "    ~ to:      {} -> {}",
+                        left.to_user_id, right.to_user_id
+                    )?;
+                }
+                if left.timestamp != right.timestamp {
+                    writeln!(
+                        f,
+                        "    ~ ts:      {} -> {}",
+                        left.timestamp, right.timestamp
+                    )?;
+                }
+                if left.description != right.description {
+                    writeln!(
+                        f,
+                        "    ~ desc:    {} -> {}",
+                        left.description, right.description
+                    )?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 fn compare<'a>(left: &'a [Transaction], right: &'a [Transaction]) -> Vec<(u64, Diff<'a>)> {
@@ -154,8 +226,6 @@ mod tests {
         tx(tx_id, 1000, TxStatus::Success)
     }
 
-    // --- normal ---
-
     #[test]
     fn test_both_empty() {
         assert!(compare(&[], &[]).is_empty());
@@ -167,8 +237,6 @@ mod tests {
         let right = left.clone();
         assert!(compare(&left, &right).is_empty());
     }
-
-    // --- only left ---
 
     #[test]
     fn test_all_only_left() {
@@ -192,8 +260,6 @@ mod tests {
         }
     }
 
-    // --- only right ---
-
     #[test]
     fn test_all_only_right() {
         let left = vec![];
@@ -216,8 +282,6 @@ mod tests {
             panic!("expected OnlyRight with tx_id=1");
         }
     }
-
-    // --- diff ---
 
     #[test]
     fn test_mismatched_amount() {
@@ -246,8 +310,6 @@ mod tests {
             panic!("expected Mismatched");
         }
     }
-
-    // --- смешанный сценарий ---
 
     #[test]
     fn test_mixed() {
